@@ -26,8 +26,6 @@ jobs:
           echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env
           echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
 
-      - name: Generate config.js
-        run: npm run generate-config
 
       - name: Build static files
         run: npm run build
