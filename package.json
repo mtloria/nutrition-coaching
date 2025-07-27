@@ -4,7 +4,7 @@
   "description": "Fitness & Nutrition Tracker web app",
   "scripts": {
     "start": "npx serve docs",
-    "build": "npm run generate-config && cp -R src/* docs/",
+    "build": "rm -rf docs && mkdir docs && npm run generate-config && cp -R src/* docs/",
     "generate-config": "bash generate-config.sh"
   },
   "dependencies": {
