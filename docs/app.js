@@ -44,7 +44,7 @@ document.getElementById('dailyForm').addEventListener('submit', async function(e
     }
 });
 // Measurement form submission
-document.getElementById('measurementForm').addEventListener('submit', function(e) {
+document.getElementById('measurementForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const measurement = {
         date: document.getElementById('meas_date').value,
@@ -66,7 +66,12 @@ document.getElementById('measurementForm').addEventListener('submit', function(e
     updateMeasurementTable();
     this.reset();
     document.getElementById('meas_date').valueAsDate = new Date();
-    alert('Measurement added successfully!');
+    try {
+        await window.appendMeasurementToSheet(measurement);
+        alert('Measurement added and logged to Google Sheet!');
+    } catch (err) {
+        alert('Measurement added locally, but failed to log to Google Sheet: ' + (err.message || err));
+    }
 });
 function updateTable() {
     const tbody = document.getElementById('dataTableBody');

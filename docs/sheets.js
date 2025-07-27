@@ -26,7 +26,29 @@ function loadGoogleApiAndGIS() {
 }
 
 const SHEET_ID = '15KA7rfRHXcVO0TTGlmQnkKeF1p9pCIm1yTVFdsORGt8';
-const SHEET_RANGE = 'Sheet1!A1'; // Change if your sheet/tab name is different
+const SHEET_RANGE = 'Weigh-In!A2'; // Change if your sheet/tab name is different
+const MEASUREMENTS_SHEET_RANGE = 'Measurements!A2'; // For measurements sheet
+// Append measurement to Measurements sheet
+window.appendMeasurementToSheet = async function(measurement) {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  return window.gapi.client.sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: MEASUREMENTS_SHEET_RANGE,
+    valueInputOption: 'RAW',
+    insertDataOption: 'INSERT_ROWS',
+    resource: {
+      values: [[
+        measurement.date,
+        measurement.waist,
+        measurement.chest,
+        measurement.arms
+      ]]
+    }
+  });
+}
 const CLIENT_ID = '94397713029-d2tckr66pvh65vjdhohlv1l5ei730l4d.apps.googleusercontent.com';
 const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
 const DISCOVERY_DOCS = [
@@ -105,3 +127,124 @@ window.appendToSheet = async function(entry) {
 
 // Usage example (call this after form submission):
 // appendToSheet(entry).then(() => alert('Logged to Google Sheet!')).catch(err => alert('Failed: ' + err.message));
+
+// Fetch Weigh-In sheet data and update stats overview
+window.renderWeightTrendChart = async function() {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  // Fetch all weigh-in data
+  const response = await window.gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Weigh-In!A2:B', // A: date, B: weight
+  });
+  const rows = response.result.values || [];
+  console.log('Fetched weigh-in rows:', rows);
+  // Filter last 30 days
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 29); // includes today
+  const chartRows = rows.filter(row => {
+    const dateStr = row[0];
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d >= thirtyDaysAgo && d <= today;
+  });
+  console.log('Filtered chartRows:', chartRows);
+  // Prepare data
+  const labels = chartRows.map(r => r[0]);
+  const weights = chartRows.map(r => parseFloat(r[1])).map(w => isNaN(w) ? null : w);
+  // Render chart (simple line chart)
+  const chartDiv = document.getElementById('weightChart');
+  if (!chartDiv) {
+    console.error('weightChart div not found');
+    return;
+  }
+  if (!labels.length) {
+    chartDiv.textContent = 'No weight data for last 30 days.';
+    return;
+  }
+  // Use Chart.js if available, else fallback to table
+  if (window.Chart && typeof window.Chart === 'function') {
+    chartDiv.innerHTML = '<canvas id="weightChartCanvas"></canvas>';
+    const ctx = document.getElementById('weightChartCanvas').getContext('2d');
+    new window.Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Weight (lbs)',
+          data: weights,
+          borderColor: '#2980b9',
+          backgroundColor: 'rgba(41,128,185,0.1)',
+          fill: true,
+          tension: 0.2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { x: { display: false }, y: { beginAtZero: false } }
+      }
+    });
+  } else {
+    // Fallback: simple HTML table
+    let html = '<table class="chart-table"><tr><th>Date</th><th>Weight</th></tr>';
+    for (let i = 0; i < labels.length; i++) {
+      html += '<tr><td>' + labels[i] + '</td><td>' + (weights[i] !== null ? weights[i] : '--') + '</td></tr>';
+    }
+    html += '</table>';
+    chartDiv.innerHTML = html;
+  }
+  // If nothing rendered, show debug info
+  if (!chartDiv.innerHTML || chartDiv.innerHTML.trim() === '') {
+    chartDiv.textContent = 'Debug: No chart/table rendered. Check console for details.';
+  }
+}
+window.updateStatsOverview = async function() {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  // Fetch all weigh-in data
+  const response = await window.gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Weigh-In!A2:K', // A:K covers all columns
+  });
+  const rows = response.result.values || [];
+  // Parse and filter last 7 days
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6); // includes today
+  const weekRows = rows.filter(row => {
+    const dateStr = row[0];
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d >= sevenDaysAgo && d <= today;
+  });
+  // Calculate stats
+  function avg(arr) {
+    if (!arr.length) return '--';
+    return (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+  }
+  // Weight: col 1, Calories: col 4, Sleep: col 2, Protein: col 5
+  const weights = weekRows.map(r => parseFloat(r[1])).filter(x => !isNaN(x));
+  const calories = weekRows.map(r => parseFloat(r[4])).filter(x => !isNaN(x));
+  const sleeps = weekRows.map(r => parseFloat(r[2])).filter(x => !isNaN(x));
+  const proteins = weekRows.map(r => parseFloat(r[5])).filter(x => !isNaN(x));
+  // Update DOM
+  document.getElementById('avgWeight').textContent = avg(weights);
+  document.getElementById('avgCalories').textContent = avg(calories);
+  document.getElementById('avgSleep').textContent = avg(sleeps);
+  document.getElementById('totalWorkouts').textContent = avg(proteins);
+}
+
+// Automatically update stats overview on app load
+window.addEventListener('load', function() {
+  // Wait for Google API and GIS to be loaded, then update stats and chart
+  loadGoogleApiAndGIS().then(async () => {
+    await window.updateStatsOverview();
+    await window.renderWeightTrendChart();
+  });
+});
