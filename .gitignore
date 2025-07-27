@@ -2,7 +2,6 @@
 node_modules/
 
 # Dependency directories
-public/styles.css
 
 # Build output
 /dist/
