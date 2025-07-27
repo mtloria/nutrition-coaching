@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Dependency directories
+public/styles.css
+
+# Build output
+/dist/
+
+# VS Code settings
+.vscode/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.log

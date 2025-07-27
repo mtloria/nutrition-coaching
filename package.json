@@ -1,0 +1,12 @@
+{
+  "name": "nutrition-coaching",
+  "version": "1.0.0",
+  "description": "Fitness & Nutrition Tracker web app",
+  "scripts": {
+    "start": "npx serve public"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "serve": "^14.0.1"
+  }
+}
