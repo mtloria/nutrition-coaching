@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/bash
 # generate-config.sh: Generate config.js from .env
 
 ENV_FILE=".env"
