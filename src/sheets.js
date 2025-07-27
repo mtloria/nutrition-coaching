@@ -1,3 +1,63 @@
+// Fetch and render recent entries from Weigh-In sheet
+window.renderRecentEntries = async function() {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  const response = await window.gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Weigh-In!A2:K',
+  });
+  const rows = response.result.values || [];
+  const tbody = document.getElementById('dataTableBody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #7f8c8d;">No entries yet. Add your first daily entry above!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(row => {
+    // [date, weight, sleep, energy, calories, protein, carbs, fat, exercise, exercise_duration, notes]
+    return `<tr>
+      <td>${row[0] || ''}</td>
+      <td>${row[1] || ''}</td>
+      <td>${row[4] || ''}</td>
+      <td>${row[5] || ''}</td>
+      <td>${row[6] || ''}</td>
+      <td>${row[7] || ''}</td>
+      <td>${row[8] || ''}</td>
+      <td>${row[2] || ''}</td>
+      <td>${row[3] || ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Fetch and render recent measurements from Measurements sheet
+window.renderRecentMeasurements = async function() {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  const response = await window.gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Measurements!A2:D',
+  });
+  const rows = response.result.values || [];
+  const tbody = document.getElementById('measurementTableBody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #7f8c8d;">No measurements yet. Add your first measurement above!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(row => {
+    // [date, waist, chest, arms]
+    return `<tr>
+      <td>${row[0] || ''}</td>
+      <td>${row[1] || ''}</td>
+      <td>${row[2] || ''}</td>
+      <td>${row[3] || ''}</td>
+    </tr>`;
+  }).join('');
+}
 // Client-side Google Sheets integration for Nutrition Coaching App
 // This file provides functions to append daily log entries to a public Google Sheet using OAuth2 (GIS)
 
@@ -246,5 +306,7 @@ window.addEventListener('load', function() {
   loadGoogleApiAndGIS().then(async () => {
     await window.updateStatsOverview();
     await window.renderWeightTrendChart();
+    await window.renderRecentEntries();
+    await window.renderRecentMeasurements();
   });
 });

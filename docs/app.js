@@ -141,35 +141,6 @@ function deleteMeasurement(index) {
         updateMeasurementTable();
     }
 }
-function exportData() {
-    const data = {
-        dailyEntries: dailyEntries,
-        measurements: measurements,
-        exportDate: new Date().toISOString()
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'fitness-data-' + new Date().toISOString().split('T')[0] + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    alert('Data exported successfully! You can share this file with your coach.');
-}
-function clearAllData() {
-    if (confirm('Are you sure you want to clear ALL data? This cannot be undone.')) {
-        if (confirm('This will permanently delete all entries and measurements. Are you absolutely sure?')) {
-            dailyEntries = [];
-            measurements = [];
-            updateTable();
-            updateMeasurementTable();
-            updateStats();
-            alert('All data cleared.');
-        }
-    }
-}
 // Initialize
 updateTable();
 updateMeasurementTable();
