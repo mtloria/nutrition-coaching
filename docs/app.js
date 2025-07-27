@@ -37,7 +37,7 @@ document.getElementById('dailyForm').addEventListener('submit', async function(e
     document.getElementById('date').valueAsDate = new Date();
     // Send entry to Google Sheets
     try {
-        await appendToSheet(entry);
+        await window.appendToSheet(entry);
         alert('Entry added and logged to Google Sheet!');
     } catch (err) {
         alert('Entry added locally, but failed to log to Google Sheet: ' + (err.message || err));

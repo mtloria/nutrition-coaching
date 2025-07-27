@@ -109,8 +109,8 @@ window.appendMeasurementToSheet = async function(measurement) {
     }
   });
 }
-const CLIENT_ID = window.APP_CONFIG.GOOGLE_CLIENT_ID;
-const API_KEY = window.APP_CONFIG.GOOGLE_API_KEY;
+const CLIENT_ID = '94397713029-d2tckr66pvh65vjdhohlv1l5ei730l4d.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
 const DISCOVERY_DOCS = [
   'https://sheets.googleapis.com/$discovery/rest?version=v4'
 ];
