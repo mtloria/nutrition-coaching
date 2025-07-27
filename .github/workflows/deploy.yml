@@ -31,9 +31,9 @@ jobs:
 
       - name: List docs directory
         run: ls -l docs
-        
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          publish_dir: ${{ github.workspace }}/docs
