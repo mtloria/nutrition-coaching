@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Fitness & Nutrition Tracker web app",
   "scripts": {
-    "start": "npx serve public"
+    "start": "npx serve public",
+    "build": "rm -rf dist && cp -R public dist"
   },
   "dependencies": {},
   "devDependencies": {
