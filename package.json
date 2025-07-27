@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npx serve docs",
     "build": "rm -rf dist && cp -R docs dist && cp -R src/* docs/",
-    "server": "node src/server.js"
+    "generate-config": "zsh generate-config.sh"
   },
   "dependencies": {
     "express": "^4.18.2",

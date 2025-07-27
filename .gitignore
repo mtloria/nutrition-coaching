@@ -25,3 +25,5 @@ Thumbs.db
 
 # Misc
 *.log
+
+/docs/config.js
