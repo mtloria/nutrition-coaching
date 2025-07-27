@@ -5,7 +5,7 @@ let measurements = [];
 document.getElementById('date').valueAsDate = new Date();
 document.getElementById('meas_date').valueAsDate = new Date();
 // Daily form submission
-document.getElementById('dailyForm').addEventListener('submit', function(e) {
+document.getElementById('dailyForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     const entry = {
         date: document.getElementById('date').value,
@@ -35,7 +35,13 @@ document.getElementById('dailyForm').addEventListener('submit', function(e) {
     updateStats();
     this.reset();
     document.getElementById('date').valueAsDate = new Date();
-    alert('Entry added successfully!');
+    // Send entry to Google Sheets
+    try {
+        await appendToSheet(entry);
+        alert('Entry added and logged to Google Sheet!');
+    } catch (err) {
+        alert('Entry added locally, but failed to log to Google Sheet: ' + (err.message || err));
+    }
 });
 // Measurement form submission
 document.getElementById('measurementForm').addEventListener('submit', function(e) {
