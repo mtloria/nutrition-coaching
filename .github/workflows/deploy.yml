@@ -28,9 +28,12 @@ jobs:
 
       - name: Build static files
         run: npm run build
+        working-directory: ${{ github.workspace }}
 
+      - name: List workspace
+        run: ls -l ${{ github.workspace }}
       - name: List docs directory
-        run: ls -l docs
+        run: ls -l ${{ github.workspace }}/docs
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
