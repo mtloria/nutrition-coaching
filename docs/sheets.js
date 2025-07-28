@@ -1,30 +1,21 @@
-// Check if an entry exists in the Weigh-In sheet for a given date
+// Check if an entry exists in the Weigh-In sheet for a given date (read-only, no sign-in)
 window.checkEntryExistsInSheet = async function(date) {
-  await initGoogleClient();
-  if (!accessToken) {
-    await signInGoogle();
-  }
-  const response = await window.gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Weigh-In!A2:A', // Only fetch the date column
-  });
-  const rows = response.result.values || [];
-  // Dates in the sheet may be formatted as strings, so compare as strings
+  const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A2:A?key=${API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const rows = data.values || [];
   return rows.some(row => row[0] === date);
 };
 
-// Update an existing entry in the Weigh-In sheet for a given date
+// Update an existing entry in the Weigh-In sheet for a given date (requires sign-in)
 window.updateEntryInSheet = async function(entry) {
-  await initGoogleClient();
-  if (!accessToken) {
-    await signInGoogle();
-  }
-  // Fetch all dates to find the row index
-  const response = await window.gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Weigh-In!A2:A',
-  });
-  const rows = response.result.values || [];
+  // Fetch all dates to find the row index (read-only, no sign-in)
+  const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A2:A?key=${API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const rows = data.values || [];
   let rowIndex = -1;
   for (let i = 0; i < rows.length; i++) {
     if (rows[i][0] === entry.date) {
@@ -48,7 +39,11 @@ window.updateEntryInSheet = async function(entry) {
     entry.exercise_duration,
     entry.notes
   ];
-  // Update the row using the Sheets API
+  // Now do the update (requires sign-in)
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
   return window.gapi.client.sheets.spreadsheets.values.update({
     spreadsheetId: SHEET_ID,
     range: `Weigh-In!A${rowIndex}:L${rowIndex}`,
@@ -56,17 +51,13 @@ window.updateEntryInSheet = async function(entry) {
     resource: { values: [rowData] }
   });
 };
-// Fetch and render recent entries from Weigh-In sheet
+// Fetch and render recent entries from Weigh-In sheet (read-only, no sign-in)
 window.renderRecentEntries = async function() {
-  await initGoogleClient();
-  if (!accessToken) {
-    await signInGoogle();
-  }
-  const response = await window.gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Weigh-In!A2:L',
-  });
-  const rows = response.result.values || [];
+  const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A2:L?key=${API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const rows = data.values || [];
   const tbody = document.getElementById('dataTableBody');
   if (!tbody) return;
   if (!rows.length) {
@@ -90,17 +81,13 @@ window.renderRecentEntries = async function() {
   }).join('');
 }
 
-// Fetch and render recent measurements from Measurements sheet
+// Fetch and render recent measurements from Measurements sheet (read-only, no sign-in)
 window.renderRecentMeasurements = async function() {
-  await initGoogleClient();
-  if (!accessToken) {
-    await signInGoogle();
-  }
-  const response = await window.gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Measurements!A2:D',
-  });
-  const rows = response.result.values || [];
+  const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Measurements!A2:D?key=${API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const rows = data.values || [];
   const tbody = document.getElementById('measurementTableBody');
   if (!tbody) return;
   if (!rows.length) {
@@ -282,17 +269,12 @@ window.appendToSheet = async function(entry) {
 
 // Fetch Weigh-In sheet data and update stats overview
 window.renderWeightTrendChart = async function() {
-  await initGoogleClient();
-  if (!accessToken) {
-    await signInGoogle();
-  }
-  // Fetch all weigh-in data
-  const response = await window.gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Weigh-In!A2:B', // A: date, B: weight
-  });
-  const rows = response.result.values || [];
-  console.log('Fetched weigh-in rows:', rows);
+  // Fetch all weigh-in data (read-only, no sign-in)
+  const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A2:B?key=${API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const rows = data.values || [];
   // Filter last 30 days
   const today = new Date();
   const thirtyDaysAgo = new Date(today);
@@ -303,7 +285,6 @@ window.renderWeightTrendChart = async function() {
     const d = new Date(dateStr);
     return d >= thirtyDaysAgo && d <= today;
   });
-  console.log('Filtered chartRows:', chartRows);
   // Prepare data
   const labels = chartRows.map(r => r[0]);
   const weights = chartRows.map(r => parseFloat(r[1])).map(w => isNaN(w) ? null : w);
@@ -355,16 +336,12 @@ window.renderWeightTrendChart = async function() {
   }
 }
 window.updateStatsOverview = async function() {
-  await initGoogleClient();
-  if (!accessToken) {
-    await signInGoogle();
-  }
-  // Fetch all weigh-in data
-  const response = await window.gapi.client.sheets.spreadsheets.values.get({
-    spreadsheetId: SHEET_ID,
-    range: 'Weigh-In!A2:K', // A:K covers all columns
-  });
-  const rows = response.result.values || [];
+  // Fetch all weigh-in data (read-only, no sign-in)
+  const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A2:K?key=${API_KEY}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const rows = data.values || [];
   // Parse and filter last 7 days
   const today = new Date();
   const sevenDaysAgo = new Date(today);

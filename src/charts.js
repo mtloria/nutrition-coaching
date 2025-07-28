@@ -35,20 +35,17 @@ function createChart(ctx, label, labels, data) {
 // Fetch all data and render charts for each field
 document.addEventListener('DOMContentLoaded', async () => {
   const container = document.getElementById('charts-container');
+  // Set up Back to Home button click
+  const backBtn = document.getElementById('back-home-btn');
+  if (backBtn) backBtn.onclick = () => { window.location.href = 'index.html'; };
   container.innerHTML = '<div style="text-align:center;padding:2em;">Loading charts...</div>';
   try {
-    if (!window.gapi || !window.gapi.client) {
-      await (window.initGoogleClient ? window.initGoogleClient() : Promise.resolve());
-    }
-    if (window.signInGoogle) {
-      await window.signInGoogle();
-    }
-    // Fetch all data from the Weigh-In sheet
-    const response = await window.gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'Weigh-In!A1:Z', // Adjust range as needed
-    });
-    const rows = response.result.values;
+    // Fetch all data from the Weigh-In sheet using public API (no OAuth)
+    const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A1:Z?key=${API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const rows = data.values;
     if (!rows || rows.length < 2) {
       container.innerHTML = '<div style="text-align:center;padding:2em;color:#888;">No data found in the sheet.</div>';
       return;
