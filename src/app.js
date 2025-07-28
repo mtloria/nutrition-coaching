@@ -1,6 +1,4 @@
-// Data storage
-let dailyEntries = [];
-let measurements = [];
+// No local data storage. All data is read/written directly from Google Sheets.
 // Initialize with today's date
 document.getElementById('date').valueAsDate = new Date();
 document.getElementById('meas_date').valueAsDate = new Date();
@@ -21,28 +19,33 @@ document.getElementById('dailyForm').addEventListener('submit', async function(e
         exercise_duration: document.getElementById('exercise_duration').value,
         notes: document.getElementById('notes').value
     };
-    // Check if entry for this date already exists
-    const existingIndex = dailyEntries.findIndex(e => e.date === entry.date);
-    if (existingIndex !== -1) {
-        if (confirm('An entry for this date already exists. Do you want to update it?')) {
-            dailyEntries[existingIndex] = entry;
+    let sheetExists = false;
+    try {
+        sheetExists = await window.checkEntryExistsInSheet(entry.date);
+    } catch (err) {
+        sheetExists = false;
+    }
+    if (sheetExists) {
+        if (await customConfirm('An entry for this date already exists. Do you want to update it?', 'Update Entry?')) {
+            try {
+                await window.updateEntryInSheet(entry);
+                await customAlert('Entry updated in Google Sheet!', 'Success');
+            } catch (err) {
+                await customAlert('Failed to update in Google Sheet: ' + (err.message || err), 'Error');
+            }
+        } else {
+            await customAlert('Entry was not updated.', 'Cancelled');
         }
     } else {
-        dailyEntries.push(entry);
+        try {
+            await window.appendToSheet(entry);
+            await customAlert('Entry added and logged to Google Sheet!', 'Success');
+        } catch (err) {
+            await customAlert('Failed to log to Google Sheet: ' + (err.message || err), 'Error');
+        }
     }
-    // Sort by date (newest first)
-    dailyEntries.sort((a, b) => new Date(b.date) - new Date(a.date));
-    updateTable();
-    updateStats();
     this.reset();
     document.getElementById('date').valueAsDate = new Date();
-    // Send entry to Google Sheets
-    try {
-        await window.appendToSheet(entry);
-        alert('Entry added and logged to Google Sheet!');
-    } catch (err) {
-        alert('Entry added locally, but failed to log to Google Sheet: ' + (err.message || err));
-    }
 });
 // Measurement form submission
 document.getElementById('measurementForm').addEventListener('submit', async function(e) {
@@ -53,97 +56,103 @@ document.getElementById('measurementForm').addEventListener('submit', async func
         chest: document.getElementById('chest').value,
         arms: document.getElementById('arms').value
     };
-    // Check if measurement for this date already exists
-    const existingIndex = measurements.findIndex(m => m.date === measurement.date);
-    if (existingIndex !== -1) {
-        if (confirm('A measurement for this date already exists. Do you want to update it?')) {
-            measurements[existingIndex] = measurement;
+    // Only Google Sheets: check if measurement exists, update or append
+    let sheetExists = false;
+    try {
+        sheetExists = await window.checkMeasurementExistsInSheet(measurement.date);
+    } catch (err) {
+        sheetExists = false;
+    }
+    if (sheetExists) {
+        if (await customConfirm('A measurement for this date already exists. Do you want to update it?', 'Update Measurement?')) {
+            try {
+                await window.updateMeasurementInSheet(measurement);
+                await customAlert('Measurement updated in Google Sheet!', 'Success');
+            } catch (err) {
+                await customAlert('Failed to update measurement in Google Sheet: ' + (err.message || err), 'Error');
+            }
+        } else {
+            await customAlert('Measurement was not updated.', 'Cancelled');
         }
     } else {
-        measurements.push(measurement);
+        try {
+            await window.appendMeasurementToSheet(measurement);
+            await customAlert('Measurement added and logged to Google Sheet!', 'Success');
+        } catch (err) {
+            await customAlert('Failed to log measurement to Google Sheet: ' + (err.message || err), 'Error');
+        }
     }
-    // Sort by date (newest first)
-    measurements.sort((a, b) => new Date(b.date) - new Date(a.date));
-    updateMeasurementTable();
     this.reset();
     document.getElementById('meas_date').valueAsDate = new Date();
-    try {
-        await window.appendMeasurementToSheet(measurement);
-        alert('Measurement added and logged to Google Sheet!');
-    } catch (err) {
-        alert('Measurement added locally, but failed to log to Google Sheet: ' + (err.message || err));
-    }
 });
-function updateTable() {
-    const tbody = document.getElementById('dataTableBody');
-    if (dailyEntries.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 40px; color: #7f8c8d;">No entries yet. Add your first daily entry above!</td></tr>';
-        return;
-    }
-    tbody.innerHTML = dailyEntries.map((entry, index) => `
-        <tr>
-            <td>${entry.date}</td>
-            <td>${entry.weight || '--'}</td>
-            <td>${entry.calories || '--'}</td>
-            <td>${entry.protein || '--'}</td>
-            <td>${entry.carbs || '--'}</td>
-            <td>${entry.fat || '--'}</td>
-            <td>${entry.steps || '--'}</td>
-            <td>${entry.exercise || '--'}</td>
-            <td>${entry.sleep || '--'}</td>
-            <td>${entry.energy || '--'}</td>
-            <td><button onclick="deleteEntry(${index})" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Delete</button></td>
-        </tr>
-    `).join('');
+// All table rendering and stats are handled by Google Sheets functions in sheets.js
+
+
+// --- Modal Utility ---
+
+function showCustomModal({ title, message, buttons }) {
+    return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        const modal = document.createElement('div');
+        modal.className = 'custom-modal';
+        if (title) {
+            const h2 = document.createElement('h2');
+            h2.textContent = title;
+            modal.appendChild(h2);
+        }
+        if (message) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            modal.appendChild(p);
+        }
+        const btnRow = document.createElement('div');
+        btnRow.style.marginTop = '1.5em';
+        btnRow.style.display = 'flex';
+        btnRow.style.justifyContent = 'center';
+        buttons.forEach(btn => {
+            const button = document.createElement('button');
+            button.className = 'custom-modal-btn';
+            button.textContent = btn.label;
+            button.onclick = () => {
+                document.body.removeChild(overlay);
+                resolve(btn.value);
+            };
+            btnRow.appendChild(button);
+        });
+        modal.appendChild(btnRow);
+        overlay.appendChild(modal);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                // Optional: close modal on overlay click if only one button (alert style)
+                if (buttons.length === 1) {
+                    document.body.removeChild(overlay);
+                    resolve(buttons[0].value);
+                }
+            }
+        });
+        document.body.appendChild(overlay);
+    });
 }
-function updateMeasurementTable() {
-    const tbody = document.getElementById('measurementTableBody');
-    if (measurements.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #7f8c8d;">No measurements yet. Add your first measurement above!</td></tr>';
-        return;
-    }
-    tbody.innerHTML = measurements.map((measurement, index) => `
-        <tr>
-            <td>${measurement.date}</td>
-            <td>${measurement.waist || '--'}"</td>
-            <td>${measurement.chest || '--'}"</td>
-            <td>${measurement.arms || '--'}"</td>
-            <td><button onclick="deleteMeasurement(${index})" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Delete</button></td>
-        </tr>
-    `).join('');
+
+// Replace alert/confirm with custom modal
+async function customAlert(message, title = 'Notice') {
+    await showCustomModal({
+        title,
+        message,
+        buttons: [{ label: 'OK', value: true }]
+    });
 }
-function updateStats() {
-    const last7Days = dailyEntries.slice(0, 7);
-    // Average weight
-    const weights = last7Days.filter(e => e.weight).map(e => parseFloat(e.weight));
-    const avgWeight = weights.length > 0 ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : '--';
-    document.getElementById('avgWeight').textContent = avgWeight !== '--' ? avgWeight + ' lbs' : '--';
-    // Average calories
-    const calories = last7Days.filter(e => e.calories).map(e => parseFloat(e.calories));
-    const avgCalories = calories.length > 0 ? Math.round(calories.reduce((a, b) => a + b, 0) / calories.length) : '--';
-    document.getElementById('avgCalories').textContent = avgCalories !== '--' ? avgCalories : '--';
-    // Total workouts
-    const workouts = last7Days.filter(e => e.exercise && e.exercise.trim() !== '').length;
-    document.getElementById('totalWorkouts').textContent = workouts;
-    // Average sleep
-    const sleepHours = last7Days.filter(e => e.sleep).map(e => parseFloat(e.sleep));
-    const avgSleep = sleepHours.length > 0 ? (sleepHours.reduce((a, b) => a + b, 0) / sleepHours.length).toFixed(1) : '--';
-    document.getElementById('avgSleep').textContent = avgSleep !== '--' ? avgSleep + 'h' : '--';
+
+async function customConfirm(message, title = 'Please Confirm') {
+    return await showCustomModal({
+        title,
+        message,
+        buttons: [
+            { label: 'Cancel', value: false },
+            { label: 'Yes', value: true }
+        ]
+    });
 }
-function deleteEntry(index) {
-    if (confirm('Are you sure you want to delete this entry?')) {
-        dailyEntries.splice(index, 1);
-        updateTable();
-        updateStats();
-    }
-}
-function deleteMeasurement(index) {
-    if (confirm('Are you sure you want to delete this measurement?')) {
-        measurements.splice(index, 1);
-        updateMeasurementTable();
-    }
-}
-// Initialize
-updateTable();
-updateMeasurementTable();
-updateStats();
+
+// --- Patch form logic to use custom modals ---

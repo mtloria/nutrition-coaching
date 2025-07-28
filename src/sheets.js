@@ -1,3 +1,61 @@
+// Check if an entry exists in the Weigh-In sheet for a given date
+window.checkEntryExistsInSheet = async function(date) {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  const response = await window.gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Weigh-In!A2:A', // Only fetch the date column
+  });
+  const rows = response.result.values || [];
+  // Dates in the sheet may be formatted as strings, so compare as strings
+  return rows.some(row => row[0] === date);
+};
+
+// Update an existing entry in the Weigh-In sheet for a given date
+window.updateEntryInSheet = async function(entry) {
+  await initGoogleClient();
+  if (!accessToken) {
+    await signInGoogle();
+  }
+  // Fetch all dates to find the row index
+  const response = await window.gapi.client.sheets.spreadsheets.values.get({
+    spreadsheetId: SHEET_ID,
+    range: 'Weigh-In!A2:A',
+  });
+  const rows = response.result.values || [];
+  let rowIndex = -1;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i][0] === entry.date) {
+      rowIndex = i + 2; // +2 because A2 is row 2 in the sheet
+      break;
+    }
+  }
+  if (rowIndex === -1) throw new Error('Entry not found for update');
+  // Prepare the row data in the correct order
+  const rowData = [
+    entry.date,
+    entry.weight,
+    entry.sleep,
+    entry.energy,
+    entry.calories,
+    entry.protein,
+    entry.carbs,
+    entry.fat,
+    entry.steps,
+    entry.exercise,
+    entry.exercise_duration,
+    entry.notes
+  ];
+  // Update the row using the Sheets API
+  return window.gapi.client.sheets.spreadsheets.values.update({
+    spreadsheetId: SHEET_ID,
+    range: `Weigh-In!A${rowIndex}:L${rowIndex}`,
+    valueInputOption: 'RAW',
+    resource: { values: [rowData] }
+  });
+};
 // Fetch and render recent entries from Weigh-In sheet
 window.renderRecentEntries = async function() {
   await initGoogleClient();
