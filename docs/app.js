@@ -16,6 +16,7 @@ document.getElementById('dailyForm').addEventListener('submit', async function(e
         protein: document.getElementById('protein').value,
         carbs: document.getElementById('carbs').value,
         fat: document.getElementById('fat').value,
+        steps: document.getElementById('steps').value,
         exercise: document.getElementById('exercise').value,
         exercise_duration: document.getElementById('exercise_duration').value,
         notes: document.getElementById('notes').value
@@ -87,6 +88,7 @@ function updateTable() {
             <td>${entry.protein || '--'}</td>
             <td>${entry.carbs || '--'}</td>
             <td>${entry.fat || '--'}</td>
+            <td>${entry.steps || '--'}</td>
             <td>${entry.exercise || '--'}</td>
             <td>${entry.sleep || '--'}</td>
             <td>${entry.energy || '--'}</td>

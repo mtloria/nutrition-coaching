@@ -6,17 +6,17 @@ window.renderRecentEntries = async function() {
   }
   const response = await window.gapi.client.sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: 'Weigh-In!A2:K',
+    range: 'Weigh-In!A2:L',
   });
   const rows = response.result.values || [];
   const tbody = document.getElementById('dataTableBody');
   if (!tbody) return;
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #7f8c8d;">No entries yet. Add your first daily entry above!</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #7f8c8d;">No entries yet. Add your first daily entry above!</td></tr>';
     return;
   }
   tbody.innerHTML = rows.map(row => {
-    // [date, weight, sleep, energy, calories, protein, carbs, fat, exercise, exercise_duration, notes]
+    // [date, weight, sleep, energy, calories, protein, carbs, fat, steps, exercise, exercise_duration, notes]
     return `<tr>
       <td>${row[0] || ''}</td>
       <td>${row[1] || ''}</td>
@@ -25,6 +25,7 @@ window.renderRecentEntries = async function() {
       <td>${row[6] || ''}</td>
       <td>${row[7] || ''}</td>
       <td>${row[8] || ''}</td>
+      <td>${row[9] || ''}</td>
       <td>${row[2] || ''}</td>
       <td>${row[3] || ''}</td>
     </tr>`;
@@ -177,6 +178,7 @@ window.appendToSheet = async function(entry) {
         entry.protein,
         entry.carbs,
         entry.fat,
+        entry.steps,
         entry.exercise,
         entry.exercise_duration,
         entry.notes

@@ -4,7 +4,7 @@
   "description": "Fitness & Nutrition Tracker web app",
   "scripts": {
     "start": "npx serve docs",
-    "build": "mkdir docs && cp -R src/* docs/"
+    "build": "rm -rf docs && mkdir -p docs && cp -R src/* docs/"
   },
   "dependencies": {
   },
