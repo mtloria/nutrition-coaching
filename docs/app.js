@@ -1,7 +1,14 @@
 // No local data storage. All data is read/written directly from Google Sheets.
 // Initialize with today's date
-document.getElementById('date').valueAsDate = new Date();
-document.getElementById('meas_date').valueAsDate = new Date();
+function getLocalDateString() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+document.getElementById('date').value = getLocalDateString();
+document.getElementById('meas_date').value = getLocalDateString();
 // Daily form submission
 document.getElementById('dailyForm').addEventListener('submit', async function(e) {
     e.preventDefault();
@@ -45,7 +52,7 @@ document.getElementById('dailyForm').addEventListener('submit', async function(e
         }
     }
     this.reset();
-    document.getElementById('date').valueAsDate = new Date();
+    document.getElementById('date').value = getLocalDateString();
 });
 // Measurement form submission
 document.getElementById('measurementForm').addEventListener('submit', async function(e) {
@@ -83,7 +90,7 @@ document.getElementById('measurementForm').addEventListener('submit', async func
         }
     }
     this.reset();
-    document.getElementById('meas_date').valueAsDate = new Date();
+    document.getElementById('meas_date').value = getLocalDateString();
 });
 // All table rendering and stats are handled by Google Sheets functions in sheets.js
 
