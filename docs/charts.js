@@ -33,14 +33,49 @@ function createChart(ctx, label, labels, data) {
 }
 
 // Fetch all data and render charts for each field
-document.addEventListener('DOMContentLoaded', async () => {
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Tab elements
+  const tabWeighIn = document.getElementById('tab-weighin');
+  const tabMeasurements = document.getElementById('tab-measurements');
+  const weighInContainer = document.getElementById('charts-container');
+  const measurementsContainer = document.getElementById('measurements-container');
+  const exerciseTableContainer = document.getElementById('exercise-table-container');
+
+  // Tab switching logic
+  tabWeighIn.addEventListener('click', () => {
+    tabWeighIn.classList.add('active');
+    tabMeasurements.classList.remove('active');
+    weighInContainer.style.display = '';
+    measurementsContainer.style.display = 'none';
+    if (exerciseTableContainer) exerciseTableContainer.style.display = '';
+    // Only render if not already rendered
+    if (!weighInContainer.dataset.rendered) {
+      renderWeighInCharts();
+    }
+  });
+  tabMeasurements.addEventListener('click', () => {
+    tabMeasurements.classList.add('active');
+    tabWeighIn.classList.remove('active');
+    weighInContainer.style.display = 'none';
+    measurementsContainer.style.display = '';
+    if (exerciseTableContainer) exerciseTableContainer.style.display = 'none';
+    if (!measurementsContainer.dataset.rendered) {
+      renderMeasurementsCharts();
+    }
+  });
+
+  // Render default tab
+  renderWeighInCharts();
+  weighInContainer.style.display = '';
+  measurementsContainer.style.display = 'none';
+  if (exerciseTableContainer) exerciseTableContainer.style.display = '';
+});
+
+async function renderWeighInCharts() {
   const container = document.getElementById('charts-container');
-  // Set up Back to Home button click
-  const backBtn = document.getElementById('back-home-btn');
-  if (backBtn) backBtn.onclick = () => { window.location.href = 'index.html'; };
   container.innerHTML = '<div style="text-align:center;padding:2em;">Loading charts...</div>';
   try {
-    // Fetch all data from the Weigh-In sheet using public API (no OAuth)
     const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Weigh-In!A1:Z?key=${API_KEY}`;
     const response = await fetch(url);
@@ -52,25 +87,102 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const headers = rows[0];
     const dataRows = rows.slice(1);
-    // Transpose data for each field
     const columns = headers.map((_, i) => dataRows.map(row => row[i] || null));
-    // Use first column as x-axis labels (e.g., dates)
     const xLabels = columns[0];
-    // Render a chart for each field (except the first column)
+    const chartFields = [
+      'Weight', 'Sleep', 'Energy Level', 'Calories', 'Protein', 'Carbs', 'Fat', 'Steps'
+    ];
+    const headerIndex = {};
+    headers.forEach((h, i) => { headerIndex[h.trim()] = i; });
     container.innerHTML = '';
-    for (let i = 1; i < headers.length; i++) {
-      const chartDiv = document.createElement('div');
-      chartDiv.style.marginBottom = '40px';
-      const h2 = document.createElement('h2');
-      h2.innerText = headers[i];
-      const canvas = document.createElement('canvas');
-      chartDiv.appendChild(h2);
-      chartDiv.appendChild(canvas);
-      container.appendChild(chartDiv);
-      createChart(canvas.getContext('2d'), headers[i], xLabels, columns[i]);
+    chartFields.forEach(field => {
+      if (headerIndex[field] !== undefined) {
+        const i = headerIndex[field];
+        const chartDiv = document.createElement('div');
+        chartDiv.style.marginBottom = '40px';
+        const h2 = document.createElement('h2');
+        h2.innerText = field;
+        const canvas = document.createElement('canvas');
+        chartDiv.appendChild(h2);
+        chartDiv.appendChild(canvas);
+        container.appendChild(chartDiv);
+        createChart(canvas.getContext('2d'), field, xLabels, columns[i]);
+      }
+    });
+    // Exercise table logic (same as before)
+    if (headerIndex['Exercise'] !== undefined && headerIndex['Duration'] !== undefined) {
+      const exerciseIdx = headerIndex['Exercise'];
+      const durationIdx = headerIndex['Duration'];
+      let dateIdx = 0;
+      for (const [h, i] of Object.entries(headerIndex)) {
+        if (h.trim().toLowerCase() === 'date') { dateIdx = i; break; }
+      }
+      const tbody = document.querySelector('#exercise-table tbody');
+      tbody.innerHTML = '';
+      let hasRows = false;
+      dataRows.forEach(row => {
+        const date = row[dateIdx] || '';
+        const exercise = row[exerciseIdx] || '';
+        const duration = row[durationIdx] || '';
+        if (exercise || duration) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${date}</td><td>${exercise}</td><td>${duration}</td>`;
+          tbody.appendChild(tr);
+          hasRows = true;
+        }
+      });
+      if (!hasRows) {
+        tbody.innerHTML = `<tr><td colspan=\"3\" style=\"text-align:center;color:#888;padding:12px;\">No exercise entries found.</td></tr>`;
+      }
+    } else {
+      const tbody = document.querySelector('#exercise-table tbody');
+      if (tbody) tbody.innerHTML = '';
     }
+    container.dataset.rendered = '1';
   } catch (err) {
     console.error('Error loading charts:', err);
     container.innerHTML = '<div style="color:red;text-align:center;padding:2em;">Error loading charts. Check console for details.<br>' + (err && err.message ? err.message : '') + '</div>';
   }
-});
+}
+
+async function renderMeasurementsCharts() {
+  const container = document.getElementById('measurements-container');
+  container.innerHTML = '<div style="text-align:center;padding:2em;">Loading measurements charts...</div>';
+  try {
+    const API_KEY = 'AIzaSyDKOPA9Lend06jeTojYcM2vKNDPKNzBmt8';
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Measurements!A1:Z?key=${API_KEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const rows = data.values;
+    if (!rows || rows.length < 2) {
+      container.innerHTML = '<div style="text-align:center;padding:2em;color:#888;">No measurements data found in the sheet.</div>';
+      return;
+    }
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    const columns = headers.map((_, i) => dataRows.map(row => row[i] || null));
+    const xLabels = columns[0];
+    const chartFields = ['Waist', 'Chest', 'Arms'];
+    const headerIndex = {};
+    headers.forEach((h, i) => { headerIndex[h.trim()] = i; });
+    container.innerHTML = '';
+    chartFields.forEach(field => {
+      if (headerIndex[field] !== undefined) {
+        const i = headerIndex[field];
+        const chartDiv = document.createElement('div');
+        chartDiv.style.marginBottom = '40px';
+        const h2 = document.createElement('h2');
+        h2.innerText = field;
+        const canvas = document.createElement('canvas');
+        chartDiv.appendChild(h2);
+        chartDiv.appendChild(canvas);
+        container.appendChild(chartDiv);
+        createChart(canvas.getContext('2d'), field, xLabels, columns[i]);
+      }
+    });
+    container.dataset.rendered = '1';
+  } catch (err) {
+    console.error('Error loading measurements charts:', err);
+    container.innerHTML = '<div style="color:red;text-align:center;padding:2em;">Error loading measurements charts. Check console for details.<br>' + (err && err.message ? err.message : '') + '</div>';
+  }
+}
