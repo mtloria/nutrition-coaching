@@ -139,7 +139,39 @@ async function initGoogleClient() {
   });
 }
 
-function signInGoogle() {
+
+async function signInGoogle() {
+  // If already signed in, skip login
+  const token = window.gapi && window.gapi.client && window.gapi.client.getToken ? window.gapi.client.getToken() : null;
+  if (token && token.access_token) {
+    accessToken = token.access_token;
+    return token;
+  }
+
+  // Try silent token request first (prompt: 'none')
+  const silentToken = await new Promise((resolve) => {
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      prompt: '', // will be set below
+      callback: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.access_token) {
+          accessToken = tokenResponse.access_token;
+          window.gapi.client.setToken({ access_token: accessToken });
+          resolve(tokenResponse);
+        } else {
+          resolve(null);
+        }
+      }
+    });
+    // Silent request
+    tokenClient.requestAccessToken({ prompt: 'none' });
+  });
+  if (silentToken && silentToken.access_token) {
+    return silentToken;
+  }
+
+  // If silent fails, do interactive login
   return new Promise((resolve, reject) => {
     const tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
