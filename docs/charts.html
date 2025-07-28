@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nutrition Data Charts</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body {
+      background: #f8fafc;
+      font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+      color: #222;
+    }
+    .container {
+      max-width: 1300px;
+      margin: 40px auto 24px auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+      padding: 32px 24px 24px 24px;
+    }
+    h1 {
+      color: #222;
+      margin-bottom: 0.5em;
+    }
+    #charts-container > div {
+      background: #f6fafd;
+      border-radius: 10px;
+      margin-bottom: 2em;
+      padding: 1.5em 1em 1em 1em;
+      box-shadow: 0 1px 4px rgba(75,192,192,0.04);
+    }
+    h2 {
+      color: #36a2eb;
+      margin-top: 0;
+    }
+    canvas {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 4px rgba(54,162,235,0.08);
+      margin-bottom: 1em;
+    }
+    @media (max-width: 700px) {
+      .container { padding: 8px 2px; }
+      h1 { font-size: 1.5em; }
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="sheets.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Data Visualization</h1>
+    <div id="charts-container">
+      <!-- Charts will be rendered here -->
+    </div>
+  </div>
+  <script src="charts.js"></script>
+</body>
+</html>
