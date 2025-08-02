@@ -152,14 +152,146 @@ function WeeklyReport() {
       fat: totalMacroCalories > 0 ? ((fatCalories / totalMacroCalories) * 100) : 0
     };
 
+    // Calculate insights and correlations
+    const insights = generateInsights(filteredData);
+
     return {
       dateRange: { start: startDate, end: endDate },
       daysIncluded: filteredData.length,
       averages,
       macroPercentages,
       totalMacroCalories,
+      insights,
       rawData: filteredData
     };
+  };
+
+  const generateInsights = (filteredData) => {
+    const insights = [];
+    
+    // Sort data by date for sequential analysis
+    const sortedData = filteredData
+      .map(row => ({
+        ...row,
+        parsedDate: parseDate(row['Date'])
+      }))
+      .filter(row => row.parsedDate)
+      .sort((a, b) => a.parsedDate - b.parsedDate);
+
+    // Analyze day-to-day patterns
+    for (let i = 0; i < sortedData.length - 1; i++) {
+      const today = sortedData[i];
+      const tomorrow = sortedData[i + 1];
+      
+      const todayCarbs = parseInt(today['Carbohydrates (grams)']) || 0;
+      const todayProtein = parseInt(today['Protein (grams)']) || 0;
+      const todayCalories = parseInt(today['Total Calories']) || 0;
+      const todaySleep = parseFloat(today['Sleep Hours']) || 0;
+      const todayEnergy = parseFloat(today['Energy Level']) || 0;
+      
+      const tomorrowEnergy = parseFloat(tomorrow['Energy Level']) || 0;
+      const tomorrowSleep = parseFloat(tomorrow['Sleep Hours']) || 0;
+      const tomorrowWeight = parseFloat(tomorrow['Morning Weight']) || 0;
+      const todayWeight = parseFloat(today['Morning Weight']) || 0;
+
+      // Low carb → Low energy next day
+      if (todayCarbs < 100 && tomorrowEnergy < todayEnergy && tomorrowEnergy < 6) {
+        insights.push({
+          type: 'nutrition-energy',
+          severity: 'medium',
+          date: tomorrow['Date'],
+          observation: `Low carb intake (${todayCarbs}g) on ${today['Date']} may have contributed to lower energy (${tomorrowEnergy}/10) on ${tomorrow['Date']}.`
+        });
+      }
+
+      // Low protein → Poor recovery pattern
+      if (todayProtein < 80 && today['Exercise Duration (minutes)'] > 30 && tomorrowEnergy < 6) {
+        insights.push({
+          type: 'protein-recovery',
+          severity: 'medium',
+          date: tomorrow['Date'],
+          observation: `Low protein intake (${todayProtein}g) after ${today['Exercise Duration (minutes)']} minutes of exercise on ${today['Date']} may have affected recovery and energy (${tomorrowEnergy}/10) the next day.`
+        });
+      }
+
+      // Poor sleep → Weight fluctuation
+      if (todaySleep < 6.5 && Math.abs(tomorrowWeight - todayWeight) > 2) {
+        const direction = tomorrowWeight > todayWeight ? 'increase' : 'decrease';
+        insights.push({
+          type: 'sleep-weight',
+          severity: 'low',
+          date: tomorrow['Date'],
+          observation: `Poor sleep (${todaySleep} hours) on ${today['Date']} may be related to weight ${direction} (+${Math.abs(tomorrowWeight - todayWeight).toFixed(1)} lbs) on ${tomorrow['Date']}.`
+        });
+      }
+
+      // Very low calories → Next day compensation
+      if (todayCalories < 1200 && parseInt(tomorrow['Total Calories']) > todayCalories + 500) {
+        insights.push({
+          type: 'calorie-compensation',
+          severity: 'medium',
+          date: tomorrow['Date'],
+          observation: `Very low calorie intake (${todayCalories} kcal) on ${today['Date']} followed by higher intake (${tomorrow['Total Calories']} kcal) suggests potential compensation eating.`
+        });
+      }
+
+      // High energy after good sleep + adequate carbs
+      if (todaySleep >= 7.5 && todayCarbs >= 150 && tomorrowEnergy >= 8) {
+        insights.push({
+          type: 'positive-pattern',
+          severity: 'positive',
+          date: tomorrow['Date'],
+          observation: `Good sleep (${todaySleep} hours) and adequate carbs (${todayCarbs}g) on ${today['Date']} corresponded with high energy (${tomorrowEnergy}/10) on ${tomorrow['Date']}.`
+        });
+      }
+    }
+
+    // Analyze overall patterns across the week
+    const avgCarbs = filteredData.reduce((sum, row) => sum + (parseInt(row['Carbohydrates (grams)']) || 0), 0) / filteredData.length;
+    const avgProtein = filteredData.reduce((sum, row) => sum + (parseInt(row['Protein (grams)']) || 0), 0) / filteredData.length;
+    const avgEnergy = filteredData.reduce((sum, row) => sum + (parseFloat(row['Energy Level']) || 0), 0) / filteredData.length;
+    const avgSleep = filteredData.reduce((sum, row) => sum + (parseFloat(row['Sleep Hours']) || 0), 0) / filteredData.length;
+
+    // Weekly pattern insights
+    if (avgCarbs < 120 && avgEnergy < 6.5) {
+      insights.push({
+        type: 'weekly-pattern',
+        severity: 'medium',
+        observation: `Overall low carbohydrate intake (${avgCarbs.toFixed(0)}g average) this week may be contributing to consistently lower energy levels (${avgEnergy.toFixed(1)}/10 average).`
+      });
+    }
+
+    if (avgProtein < 100 && avgEnergy < 6.5) {
+      insights.push({
+        type: 'weekly-pattern',
+        severity: 'medium',
+        observation: `Low protein intake (${avgProtein.toFixed(0)}g average) may be affecting energy and recovery throughout the week.`
+      });
+    }
+
+    if (avgSleep < 7 && avgEnergy < 6.5) {
+      insights.push({
+        type: 'weekly-pattern',
+        severity: 'high',
+        observation: `Insufficient sleep (${avgSleep.toFixed(1)} hours average) appears to be significantly impacting energy levels (${avgEnergy.toFixed(1)}/10 average) throughout the week.`
+      });
+    }
+
+    // Macro balance insights
+    const proteinCalories = avgProtein * 4;
+    const carbCalories = avgCarbs * 4;
+    const fatCalories = (filteredData.reduce((sum, row) => sum + (parseInt(row['Fat (grams)']) || 0), 0) / filteredData.length) * 9;
+    const proteinPercent = (proteinCalories / (proteinCalories + carbCalories + fatCalories)) * 100;
+
+    if (proteinPercent < 15 && avgEnergy < 6.5) {
+      insights.push({
+        type: 'macro-balance',
+        severity: 'medium',
+        observation: `Protein intake is below 15% of total calories (${proteinPercent.toFixed(1)}%), which may be contributing to lower energy and satiety.`
+      });
+    }
+
+    return insights;
   };
 
   const generateReport = () => {
@@ -316,6 +448,29 @@ function WeeklyReport() {
                 </div>
               </div>
             </div>
+
+            {report.insights && report.insights.length > 0 && (
+              <div className="report-section insights-section">
+                <h3>🔍 Data Insights & Patterns</h3>
+                <div className="insights-list">
+                  {report.insights.map((insight, index) => (
+                    <div key={index} className={`insight-item ${insight.severity}`}>
+                      <div className="insight-type">
+                        {insight.type === 'nutrition-energy' && '⚡ Energy & Nutrition'}
+                        {insight.type === 'protein-recovery' && '💪 Recovery & Protein'}
+                        {insight.type === 'sleep-weight' && '😴 Sleep & Weight'}
+                        {insight.type === 'calorie-compensation' && '🍽️ Eating Patterns'}
+                        {insight.type === 'positive-pattern' && '✅ Positive Patterns'}
+                        {insight.type === 'weekly-pattern' && '📊 Weekly Trends'}
+                        {insight.type === 'macro-balance' && '⚖️ Macro Balance'}
+                      </div>
+                      <div className="insight-text">{insight.observation}</div>
+                      {insight.date && <div className="insight-date">Date: {insight.date}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="notes-section">
               <h3>Coach Notes</h3>
