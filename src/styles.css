@@ -629,18 +629,30 @@ h1 {
 .macro-segment {
   height: 100%;
   transition: all 0.3s;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-segment.protein {
   background: #3b82f6;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-segment.carbs {
   background: #10b981;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-segment.fat {
   background: #f59e0b;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-labels {
@@ -662,18 +674,30 @@ h1 {
   width: 16px;
   height: 16px;
   border-radius: 50%;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-color.protein {
   background: #3b82f6;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-color.carbs {
   background: #10b981;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .macro-color.fat {
   background: #f59e0b;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 .notes-section {
@@ -766,6 +790,90 @@ h1 {
   
   .macro-bar {
     border: 1px solid #ddd;
+  }
+
+  /* Force background colors to show in print */
+  .macro-segment.protein {
+    background: #3b82f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .macro-segment.carbs {
+    background: #10b981 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .macro-segment.fat {
+    background: #f59e0b !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .macro-color.protein {
+    background: #3b82f6 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .macro-color.carbs {
+    background: #10b981 !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .macro-color.fat {
+    background: #f59e0b !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Alternative approach using borders for better print compatibility */
+  .macro-segment {
+    position: relative;
+  }
+
+  .macro-segment.protein::after {
+    content: 'PROTEIN';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 10px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  }
+
+  .macro-segment.carbs::after {
+    content: 'CARBS';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 10px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+  }
+
+  .macro-segment.fat::after {
+    content: 'FAT';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 10px;
+    text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
   }
 }
 
