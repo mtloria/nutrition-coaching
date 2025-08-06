@@ -1,0 +1,77 @@
+/* Virtual table styles */
+.virtual-table-container {
+  height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  position: relative;
+}
+
+.virtual-table-container table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  table-layout: fixed;
+}
+
+.virtual-table-container thead {
+  position: sticky;
+  top: 0;
+  background: #f8f9fa;
+  z-index: 10;
+}
+
+.virtual-table-body {
+  position: relative;
+}
+
+.virtual-table-container th, .virtual-table-container td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0.7em 0.8em;
+  text-align: left;
+  vertical-align: top;
+}
+
+.virtual-table-container th {
+  background: #e5e7eb;
+  color: #222;
+  font-weight: 600;
+  font-size: 1rem;
+  border-bottom: 2px solid #d1d5db;
+  white-space: nowrap;
+}
+
+.virtual-table-container td:not(.notes-cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes-cell {
+  max-width: 400px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.4;
+}
+
+/* Scrollbar styling */
+.virtual-table-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.virtual-table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.virtual-table-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.virtual-table-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

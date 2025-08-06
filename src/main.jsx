@@ -1,8 +1,9 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Chart, Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import './styles.css';
+import './virtual-table.css';
 import Papa from 'papaparse';
 
 const SHEET_ID = '15KA7rfRHXcVO0TTGlmQnkKeF1p9pCIm1yTVFdsORGt8';
@@ -29,6 +30,139 @@ function parseCSV(text) {
     console.log('Sample row:', result.data[0]);
   }
   return result.data;
+}
+
+// Virtual scrolling table component
+function VirtualTable({ data }) {
+  const containerRef = useRef();
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(400);
+  
+  const BASE_ITEM_HEIGHT = 50; // Minimum height of each table row
+  const VISIBLE_BUFFER = 3; // Extra items to render for smooth scrolling
+  
+  // Sort data to show most recent first
+  const sortedData = useMemo(() => {
+    return [...data].reverse();
+  }, [data]);
+  
+  // Calculate dynamic heights for each row based on notes content
+  const rowHeights = useMemo(() => {
+    return sortedData.map(row => {
+      const notes = row['Daily Notes'] || '';
+      const notesLength = notes.length;
+      
+      if (notesLength === 0) return BASE_ITEM_HEIGHT;
+      
+      // Rough estimate: ~50 chars per line, with padding
+      const estimatedLines = Math.max(1, Math.ceil(notesLength / 50));
+      return Math.max(BASE_ITEM_HEIGHT, BASE_ITEM_HEIGHT + (estimatedLines - 1) * 20);
+    });
+  }, [sortedData]);
+  
+  // Calculate cumulative heights for positioning
+  const cumulativeHeights = useMemo(() => {
+    const heights = [0];
+    for (let i = 0; i < rowHeights.length; i++) {
+      heights.push(heights[i] + rowHeights[i]);
+    }
+    return heights;
+  }, [rowHeights]);
+  
+  // Calculate which items to render based on cumulative heights
+  const visibleRange = useMemo(() => {
+    let startIndex = 0;
+    let endIndex = sortedData.length;
+    
+    // Find start index
+    for (let i = 0; i < cumulativeHeights.length - 1; i++) {
+      if (cumulativeHeights[i + 1] > scrollTop) {
+        startIndex = Math.max(0, i - VISIBLE_BUFFER);
+        break;
+      }
+    }
+    
+    // Find end index
+    const visibleBottom = scrollTop + containerHeight;
+    for (let i = startIndex; i < cumulativeHeights.length - 1; i++) {
+      if (cumulativeHeights[i] > visibleBottom) {
+        endIndex = Math.min(sortedData.length, i + VISIBLE_BUFFER);
+        break;
+      }
+    }
+    
+    return { startIndex, endIndex };
+  }, [scrollTop, containerHeight, cumulativeHeights, sortedData.length]);
+  
+  const visibleItems = sortedData.slice(visibleRange.startIndex, visibleRange.endIndex);
+  
+  const handleScroll = (e) => {
+    setScrollTop(e.target.scrollTop);
+  };
+  
+  useEffect(() => {
+    const updateHeight = () => {
+      if (containerRef.current) {
+        setContainerHeight(containerRef.current.clientHeight);
+      }
+    };
+    
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
+  
+  const totalHeight = cumulativeHeights[cumulativeHeights.length - 1] || 0;
+  const offsetY = visibleRange.startIndex < cumulativeHeights.length 
+    ? cumulativeHeights[visibleRange.startIndex] 
+    : 0;
+  
+  return (
+    <div className="virtual-table-container" ref={containerRef} onScroll={handleScroll}>
+      <table>
+        <colgroup>
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '20%' }} />
+          <col style={{ width: '15%' }} />
+          <col style={{ width: '50%' }} />
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Exercise</th>
+            <th>Duration (min)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+      </table>
+      <div className="virtual-table-body" style={{ height: totalHeight }}>
+        <div style={{ transform: `translateY(${offsetY}px)` }}>
+          <table>
+            <colgroup>
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '50%' }} />
+            </colgroup>
+            <tbody>
+              {visibleItems.map((row, index) => {
+                const actualIndex = visibleRange.startIndex + index;
+                const height = rowHeights[actualIndex] || BASE_ITEM_HEIGHT;
+                return (
+                  <tr key={actualIndex} style={{ height: height }}>
+                    <td>{row['Date']}</td>
+                    <td>{row['Exercise']}</td>
+                    <td>{row['Exercise Duration (minutes)']}</td>
+                    <td className="notes-cell">{row['Daily Notes']}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 
@@ -254,26 +388,7 @@ function Dashboard() {
 
       <div className="notes-table">
         <h2>Daily Notes</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Exercise</th>
-              <th>Duration (min)</th>
-              <th>Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, i) => (
-              <tr key={i}>
-                <td>{row['Date']}</td>
-                <td>{row['Exercise']}</td>
-                <td>{row['Exercise Duration (minutes)']}</td>
-                <td>{row['Daily Notes']}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <VirtualTable data={data} />
       </div>
 
       {/* Situation summary chart moved above, now removed from here */}
