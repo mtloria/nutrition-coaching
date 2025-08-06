@@ -249,6 +249,14 @@ function Dashboard() {
     }
   };
 
+  // Helper function to calculate optimal tick spacing
+  const calculateTickSpacing = (dataLength, chartWidth = 300) => {
+    const maxLabels = Math.floor(chartWidth / 60); // ~60px per label minimum
+    return Math.max(1, Math.ceil(dataLength / maxLabels));
+  };
+
+  const tickSpacing = calculateTickSpacing(labels.length);
+
   return (
     <div className="dashboard">
       <h1>Nutrition Dashboard</h1>
@@ -270,8 +278,39 @@ function Dashboard() {
               }}
               options={{
                 responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { x: { display: true }, y: { display: true } }
+                maintainAspectRatio: false,
+                layout: {
+                  padding: {
+                    bottom: 10 // Extra padding for rotated labels
+                  }
+                },
+                plugins: { 
+                  legend: { display: false },
+                  tooltip: {
+                    callbacks: {
+                      title: function(context) {
+                        return labels[context[0].dataIndex];
+                      }
+                    }
+                  }
+                },
+                scales: { 
+                  x: { 
+                    display: true,
+                    ticks: {
+                      maxRotation: 35, // Reduced rotation for better fit
+                      minRotation: 35,
+                      autoSkip: true,
+                      maxTicksLimit: 6, // Reduced for small charts
+                      font: {
+                        size: 10 // Smaller font for compact display
+                      }
+                    }
+                  }, 
+                  y: { 
+                    display: true
+                  } 
+                }
               }}
             />
           </div>
@@ -375,8 +414,39 @@ function Dashboard() {
                 }}
                 options={{
                   responsive: true,
-                  plugins: { legend: { display: false } },
-                  scales: { x: { display: true }, y: { display: true } }
+                  maintainAspectRatio: false,
+                  layout: {
+                    padding: {
+                      bottom: 15 // Extra padding for rotated labels
+                    }
+                  },
+                  plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        title: function(context) {
+                          return modalChart.labels[context[0].dataIndex];
+                        }
+                      }
+                    }
+                  },
+                  scales: { 
+                    x: { 
+                      display: true,
+                      ticks: {
+                        maxRotation: 45,
+                        minRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 12, // More labels allowed in modal view
+                        font: {
+                          size: 11 // Slightly larger font in modal
+                        }
+                      }
+                    }, 
+                    y: { 
+                      display: true
+                    } 
+                  }
                 }}
                 height={420}
               />
