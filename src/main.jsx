@@ -231,11 +231,18 @@ function Dashboard() {
 
   // Count occurrences for "Did any of these situations affect your eating yesterday?"
   const situationCounts = {};
+  const situationByDate = {};
   data.forEach(row => {
     const val = row['Did any of these situations affect your eating yesterday?'];
+    const date = row['Date'];
     if (val) {
       val.split(',').map(opt => opt.trim()).forEach(opt => {
-        if (opt) situationCounts[opt] = (situationCounts[opt] || 0) + 1;
+        if (opt) {
+          situationCounts[opt] = (situationCounts[opt] || 0) + 1;
+          // Track by date for timeline
+          if (!situationByDate[date]) situationByDate[date] = [];
+          situationByDate[date].push(opt);
+        }
       });
     }
   });
@@ -365,6 +372,51 @@ function Dashboard() {
             height={Math.max(220, Object.keys(situationCounts).length * 24)}
           />
         </div>
+        <div className="chart-card" style={{ minWidth: 320, flex: 1, cursor: 'pointer' }} onClick={() => setModalChart({
+          cfg: {
+            label: 'Situations Timeline - When They Occur',
+            type: 'timeline',
+            situationByDate,
+            allLabels: labels
+          },
+          labels
+        })}>
+          <h2>Situations Timeline</h2>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(12px, 1fr))', 
+            gap: '1px', 
+            padding: '10px',
+            backgroundColor: '#f8f9fa',
+            borderRadius: '8px',
+            height: '200px',
+            overflowY: 'auto'
+          }}>
+            {labels.map((date) => {
+              const dayData = situationByDate[date] || [];
+              const intensity = dayData.length;
+              return (
+                <div
+                  key={date}
+                  title={`${date}: ${dayData.join(', ') || 'No situations'}`}
+                  style={{
+                    width: '12px',
+                    height: '12px',
+                    backgroundColor: intensity === 0 ? '#e9ecef' : 
+                      intensity === 1 ? '#a8dadc' :
+                      intensity === 2 ? '#457b9d' :
+                      intensity === 3 ? '#1d3557' : '#0d1b2a',
+                    borderRadius: '2px',
+                    cursor: 'pointer'
+                  }}
+                />
+              );
+            })}
+          </div>
+          <p style={{ fontSize: '11px', color: '#666', marginTop: '8px', textAlign: 'center' }}>
+            Each square = 1 day. Darker = more situations. Click for details.
+          </p>
+        </div>
       </div>
 
       {modalChart && (
@@ -404,6 +456,66 @@ function Dashboard() {
                 }}
                 height={Math.max(420, (modalChart.cfg.labels?.length || 0) * 32)}
               />
+            ) : modalChart.cfg.type === 'timeline' ? (
+              <div>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(20px, 1fr))', 
+                  gap: '3px', 
+                  maxHeight: '400px', 
+                  overflowY: 'auto',
+                  padding: '20px',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  margin: '20px 0'
+                }}>
+                  {modalChart.cfg.allLabels.map((date) => {
+                    const dayData = modalChart.cfg.situationByDate[date] || [];
+                    const intensity = dayData.length;
+                    return (
+                      <div
+                        key={date}
+                        title={`${date}: ${dayData.join(', ') || 'No situations'}`}
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                          backgroundColor: intensity === 0 ? '#e9ecef' : 
+                            intensity === 1 ? '#a8dadc' :
+                            intensity === 2 ? '#457b9d' :
+                            intensity === 3 ? '#1d3557' : '#0d1b2a',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          border: intensity > 0 ? '1px solid #666' : 'none'
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                <div style={{ textAlign: 'center', color: '#666', fontSize: '14px' }}>
+                  <p><strong>Timeline Legend:</strong></p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', marginTop: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <div style={{ width: '15px', height: '15px', backgroundColor: '#e9ecef', borderRadius: '2px' }}></div>
+                      <span>No situations</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <div style={{ width: '15px', height: '15px', backgroundColor: '#a8dadc', borderRadius: '2px' }}></div>
+                      <span>1 situation</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <div style={{ width: '15px', height: '15px', backgroundColor: '#457b9d', borderRadius: '2px' }}></div>
+                      <span>2 situations</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <div style={{ width: '15px', height: '15px', backgroundColor: '#1d3557', borderRadius: '2px' }}></div>
+                      <span>3+ situations</span>
+                    </div>
+                  </div>
+                  <p style={{ marginTop: '15px', fontSize: '12px' }}>
+                    Hover over squares to see specific situations for each day
+                  </p>
+                </div>
+              </div>
             ) : (
               <Line
                 data={{
