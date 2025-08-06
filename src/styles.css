@@ -177,6 +177,7 @@ h1 {
   justify-content: center;
   animation: fadeIn 0.2s;
   overflow: auto;
+  padding: 20px; /* Add padding for mobile */
 }
 .custom-modal {
   background: #fff;
@@ -221,6 +222,20 @@ h1 {
   background: linear-gradient(90deg, #3576e6 0%, #1fa6e6 100%);
 }
 
+/* Mobile modal adjustments */
+@media (max-width: 700px) {
+  .custom-modal-overlay {
+    padding: 10px;
+  }
+  .custom-modal {
+    padding: 1.5rem 1rem 1rem 1rem;
+    border-radius: 12px;
+  }
+  .custom-modal h2 {
+    font-size: 1.1rem;
+  }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; } to { opacity: 1; }
 }
@@ -251,21 +266,41 @@ h1 {
 @media (max-width: 700px) {
   .dashboard {
     padding: 8px;
+    margin: 16px auto;
   }
   .charts {
     grid-template-columns: 1fr;
     gap: 18px;
   }
   .chart-card {
-    padding: 12px;
-    height: 240px; /* Even smaller for very small screens */
+    padding: 12px 8px 20px 8px; /* Added more bottom padding for labels */
+    height: 280px; /* Increased height to accommodate bottom padding */
+    min-height: 280px;
+  }
+  .chart-card h2 {
+    font-size: 1rem;
+    margin-bottom: 8px;
   }
   .notes-table {
     padding: 8px;
+    overflow-x: auto; /* Allow horizontal scrolling on mobile */
   }
   .notes-table th, .notes-table td {
-    font-size: 0.97em;
-    padding: 0.5em 0.3em;
+    font-size: 0.85em;
+    padding: 0.4em 0.2em;
+    min-width: 80px; /* Ensure minimum width for readability */
+  }
+  .notes-table th:first-child, .notes-table td:first-child {
+    min-width: 90px; /* Date column */
+  }
+  .notes-table th:nth-child(2), .notes-table td:nth-child(2) {
+    min-width: 100px; /* Exercise column */
+  }
+  .notes-table th:nth-child(3), .notes-table td:nth-child(3) {
+    min-width: 80px; /* Duration column */
+  }
+  .notes-table th:nth-child(4), .notes-table td:nth-child(4) {
+    min-width: 200px; /* Notes column - wider for readability */
   }
   h1 {
     font-size: 1.4em;

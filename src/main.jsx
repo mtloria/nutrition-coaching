@@ -130,7 +130,7 @@ function VirtualTable({ data }) {
           <tr>
             <th>Date</th>
             <th>Exercise</th>
-            <th>Duration (min)</th>
+            <th>Duration</th>
             <th>Notes</th>
           </tr>
         </thead>
@@ -281,7 +281,7 @@ function Dashboard() {
                 maintainAspectRatio: false,
                 layout: {
                   padding: {
-                    bottom: 10 // Extra padding for rotated labels
+                    bottom: 25 // Increased padding for mobile label space
                   }
                 },
                 plugins: { 
@@ -298,17 +298,22 @@ function Dashboard() {
                   x: { 
                     display: true,
                     ticks: {
-                      maxRotation: 35, // Reduced rotation for better fit
-                      minRotation: 35,
+                      maxRotation: 45, // Consistent rotation
+                      minRotation: 30, // Minimum rotation to prevent overlap
                       autoSkip: true,
-                      maxTicksLimit: 6, // Reduced for small charts
+                      maxTicksLimit: 4, // Fewer labels for mobile
                       font: {
-                        size: 10 // Smaller font for compact display
+                        size: 9 // Smaller font for mobile
                       }
                     }
                   }, 
                   y: { 
-                    display: true
+                    display: true,
+                    ticks: {
+                      font: {
+                        size: 9 // Smaller font for mobile
+                      }
+                    }
                   } 
                 }
               }}
@@ -417,7 +422,7 @@ function Dashboard() {
                   maintainAspectRatio: false,
                   layout: {
                     padding: {
-                      bottom: 15 // Extra padding for rotated labels
+                      bottom: 20 // Extra padding for rotated labels
                     }
                   },
                   plugins: { 
@@ -435,16 +440,21 @@ function Dashboard() {
                       display: true,
                       ticks: {
                         maxRotation: 45,
-                        minRotation: 0,
+                        minRotation: 30,
                         autoSkip: true,
-                        maxTicksLimit: 12, // More labels allowed in modal view
+                        maxTicksLimit: window.innerWidth < 700 ? 8 : 12, // Responsive label limit
                         font: {
-                          size: 11 // Slightly larger font in modal
+                          size: window.innerWidth < 700 ? 10 : 11 // Responsive font size
                         }
                       }
                     }, 
                     y: { 
-                      display: true
+                      display: true,
+                      ticks: {
+                        font: {
+                          size: window.innerWidth < 700 ? 10 : 11 // Responsive font size
+                        }
+                      }
                     } 
                   }
                 }}

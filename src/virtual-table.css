@@ -6,6 +6,7 @@
   border-radius: 8px;
   background: #fff;
   position: relative;
+  overflow-x: auto; /* Allow horizontal scrolling */
 }
 
 .virtual-table-container table {
@@ -14,6 +15,7 @@
   border-spacing: 0;
   background: transparent;
   table-layout: fixed;
+  min-width: 600px; /* Ensure minimum table width */
 }
 
 .virtual-table-container thead {
@@ -32,6 +34,7 @@
   padding: 0.7em 0.8em;
   text-align: left;
   vertical-align: top;
+  overflow: hidden;
 }
 
 .virtual-table-container th {
@@ -50,16 +53,17 @@
 }
 
 .notes-cell {
-  max-width: 400px;
   white-space: normal;
   word-wrap: break-word;
   overflow-wrap: break-word;
   line-height: 1.4;
+  max-width: none; /* Remove max-width constraint */
 }
 
 /* Scrollbar styling */
 .virtual-table-container::-webkit-scrollbar {
   width: 8px;
+  height: 8px; /* Add horizontal scrollbar height */
 }
 
 .virtual-table-container::-webkit-scrollbar-track {
@@ -74,4 +78,25 @@
 
 .virtual-table-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
+}
+
+/* Mobile specific table styles */
+@media (max-width: 700px) {
+  .virtual-table-container {
+    height: 350px; /* Slightly smaller on mobile */
+  }
+  
+  .virtual-table-container table {
+    min-width: 500px; /* Smaller minimum width for mobile */
+  }
+  
+  .virtual-table-container th, .virtual-table-container td {
+    padding: 0.4em 0.3em;
+    font-size: 0.85em;
+  }
+  
+  .notes-cell {
+    line-height: 1.3;
+    padding: 0.4em 0.5em; /* Slightly more padding for notes */
+  }
 }
